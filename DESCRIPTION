@@ -1,0 +1,24 @@
+Type: Package
+Package: shrapports
+Title: Shiny App with Downloadable Reports
+Version: 0.1.0
+Authors@R: 
+    person("Martin", "Frigaard", , "mjfrigaard@pm.me", role = c("aut", "cre"))
+Description: A Shiny application that demonstrates downloadable R Markdown
+    reports with modular design.
+License: MIT + file LICENSE
+Imports:
+    bslib,
+    dplyr,
+    ggplot2,
+    gt,
+    palmerpenguins,
+    rmarkdown,
+    shiny,
+    tidyr
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+VignetteBuilder: 
+    quarto

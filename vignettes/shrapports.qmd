@@ -1,0 +1,46 @@
+---
+title: "shrapports"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "" 
+
+execute:
+  echo: true
+
+vignette: >
+  %\VignetteIndexEntry{Structure}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+```
+
+```{r}
+#| label: package
+library(shrapports)
+```
+
+The goal of `shrapports` is to demonstrate how to use parameterized reports (R Markdown and/or Quarto) in Shiny applications. This document covers '*all you need to know to download reports from your Shiny app.*'
+
+## The download handler
+
+The download handler (`downloadHandler()`) can be paired with any download UI function (`downloadButton()` or `downloadLink()`).
+
+
+
+## Rendering with parameters 
+
+
+
+
+
+
