@@ -37,11 +37,7 @@ pak::pak("mjfrigaard/shrapports")
 #| label: example
 #| eval: false 
 library(shrapports)
-launch_app(app = "rmd")
+launch_app()
 ```
 
-```{r}
-#| eval: false 
-launch_app(app = "qmd")
-```
 

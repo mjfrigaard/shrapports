@@ -24,9 +24,5 @@ pak::pak("mjfrigaard/shrapports")
 
 ``` r
 library(shrapports)
-launch_app(app = "rmd")
-```
-
-``` r
-launch_app(app = "qmd")
+launch_app()
 ```
