@@ -1,70 +1,194 @@
-#' Report Module UI
+#' Report UI Module
 #'
-#' @param id The module ID
+#' @param id Namespace ID
 #'
-#' @return A UI element
-#'
+#' @return UI elements for report generation
 #' @export
-#'
-report_ui <- function(id) {
+mod_report_ui <- function(id) {
   ns <- NS(id)
-  downloadButton(
-    outputId = ns("download_report"),
-    label = "Download Report")
+
+  logr_msg("Initializing report UI module", level = "DEBUG")
+
+  tryCatch({
+      bslib::card(
+        bslib::card_header(
+          tags$div(
+            class = "d-flex justify-content-between align-items-center",
+            tags$h5("Download Report", class = "mb-0"),
+            tags$i(class = "bi bi-file-earmark-text", style = "font-size: 1.2rem;")
+          )
+        ),
+        bslib::card_body(
+          tags$p("Generate a comprehensive HTML report containing visualizations and data preview.",
+            class = "text-muted mb-3"
+          ),
+          tags$div(
+            class = "d-grid",
+            downloadButton(
+              ns("download_report"),
+              "Download Report",
+              class = "btn btn-primary",
+              icon = icon("file")
+            )
+          ),
+          tags$hr(),
+          tags$small(
+            class = "text-muted",
+            "Report includes: data visualization, summary statistics, data preview, and variable information."
+          )
+        )
+      )
+    },
+    error = function(e) {
+      logr_msg(paste("Error creating report UI:", e$message), level = "ERROR")
+      bslib::card(
+        bslib::card_header("Report Error"),
+        bslib::card_body(
+          h4("Error loading report interface", class = "text-danger"),
+          p("Please refresh the page.")
+        )
+      )
+    }
+  )
 }
 
-#' Report Module Server
+#' Report Server Module
 #'
-#' @param id The module ID
-#' @param dataset_name_reactive Reactive expression returning the dataset name
-#' @param data_reactive Reactive expression returning the current dataset
-#' @param x_var_reactive Reactive expression returning the x variable name
-#' @param y_var_reactive Reactive expression returning the y variable name
-#' @param color_var_reactive Reactive expression returning the color variable name
-#' @param table_data Reactive expression returning the summary table data
-#'
-#' @return A Shiny server module
+#' @param id Module ID
+#' @param data A reactive expression returning the dataset list
+#' @param selected_plot_type A reactive expression returning the selected plot type
+#' @param dataset_title A reactive expression returning the dataset title
 #'
 #' @export
-#'
-report_server <- function(id, dataset_name_reactive, data_reactive, x_var_reactive,
-                          y_var_reactive, color_var_reactive = NULL, table_data = NULL) {
+mod_report_server <- function(id, data, selected_plot_type, dataset_title) {
   moduleServer(id, function(input, output, session) {
 
-    # Report download handler
+    logr_msg("Initializing report server module", level = "DEBUG")
+
     output$download_report <- downloadHandler(
       filename = function() {
-        paste(dataset_name_reactive(), "-report-", Sys.Date(), ".html", sep = "")
+        tryCatch({
+            title <- if (!is.null(dataset_title()) && dataset_title() != "") {
+              gsub("[^A-Za-z0-9_-]", "_", dataset_title())
+            } else {
+              "tidytuesday_report"
+            }
+
+            timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+            filename <- paste0(title, "_", timestamp, ".html")
+
+            logr_msg(paste("Generated report filename:", filename), level = "DEBUG")
+            return(filename)
+          },
+          error = function(e) {
+            logr_msg(paste("Error generating filename:", e$message), level = "ERROR")
+            return("tidytuesday_report.html")
+          })
       },
       content = function(file) {
-        # Create a temporary Rmd file
-        tempReport <- file.path(tempdir(), "report.Rmd")
-        # Get the template
-        template_path <- system.file("rmd", "report_template.Rmd", package = "shrapports")
-        # Copy the template to a temporary file
-        file.copy(template_path, tempReport, overwrite = TRUE)
+        tryCatch({
+            logr_msg("Starting report generation", level = "INFO")
 
-        # Parameters to pass to the Rmd document
-        params <- list(
-          dataset_name = dataset_name_reactive(),
-          current_data = data_reactive(),
-          x_variable = x_var_reactive(),
-          y_variable = y_var_reactive(),
-          color_variable = if (!is.null(color_var_reactive)) color_var_reactive() else NULL,
-          summary_data = if (!is.null(table_data)) table_data() else NULL
-        )
+            # validate inputs
+            if (is.null(data()) || length(data()) == 0) {
+              logr_msg("No data available for report generation", level = "ERROR")
+              stop("No data available. Please select a dataset first.")
+            }
 
-        # Show a progress notification
-        withProgress(message = 'Generating report...', {
-          incProgress(0.3, detail = "Processing data")
-          # Render the report
-          rmarkdown::render(tempReport,
-                            output_file = file,
-                            params = params,
-                            envir = new.env(parent = globalenv()))
-          incProgress(0.7, detail = "Finalizing report")
-        })
-      }
-    )
+            # progress notification
+            showNotification(
+              "Generating report... This may take a few moments.",
+              type = "message",
+              duration = 5
+            )
+
+            # current plot type and data
+            current_plot_type <- if (!is.null(selected_plot_type())) {
+              selected_plot_type()
+            } else {
+              "type"
+            }
+
+            current_dataset_title <- if (!is.null(dataset_title())) {
+              dataset_title()
+            } else {
+              "TidyTuesday Dataset"
+            }
+
+            logr_msg(paste(
+              "Report parameters - Dataset:", current_dataset_title,
+              "Plot type:", current_plot_type
+            ), level = "INFO")
+
+            # make report plots
+            plots <- tryCatch({
+                shrapports::inspect_plot(ttd = data(),
+                  plot = current_plot_type)
+              },
+              error = function(e) {
+                logr_msg(paste("Error generating plots for report:", e$message),
+                  level = "WARN")
+                NULL
+              })
+
+            # find template
+            template_path <- system.file("rmd", "report_template.Rmd",
+              package = "shrapports"
+            )
+
+            if (template_path == "" || !file.exists(template_path)) {
+              logr_msg("Template file not found, using fallback", level = "WARN")
+
+              # Create a temporary template if the package template is missing
+              template_path <- tempfile(fileext = ".Rmd")
+              create_fallback_template(template_path)
+            }
+
+            logr_msg(paste("Using template:", template_path), level = "DEBUG")
+
+            # Prepare params for report
+            params <- list(
+              dataset_title = current_dataset_title,
+              title = paste("TidyTuesday Report:", current_dataset_title),
+              data_list = data(),
+              plots = plots,
+              plot_type = current_plot_type
+            )
+
+            logr_msg("Rendering R Markdown report", level = "INFO")
+
+            # Render the report
+            rmarkdown::render(
+              input = template_path,
+              output_file = file,
+              params = params,
+              envir = new.env(),
+              quiet = TRUE
+            )
+
+            logr_msg("Report generation completed successfully", level = "SUCCESS")
+
+            # Show success notification
+            showNotification(
+              "Report generated successfully!",
+              type = "message",
+              duration = 3
+            )
+          },
+          error = function(e) {
+            error_msg <- paste("Failed to generate report:", e$message)
+            logr_msg(error_msg, level = "ERROR")
+
+            # Show error notification
+            showNotification(
+              paste("Report generation failed:", e$message),
+              type = "error",
+              duration = 10
+            )
+
+            # Create a simple error HTML file
+            create_error_report(file, error_msg, current_dataset_title)
+          })
+      })
   })
 }

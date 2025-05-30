@@ -1,37 +1,80 @@
-#' The application server logic
+#' Application Server
 #'
-#' @param input Shiny input
-#' @param output Shiny output
-#' @param session Shiny session
+#' Defines the server logic for the modular Tidy Tuesday app.
 #'
-#' @return A Shiny server function
-#'
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
 #' @export
-#'
 app_server <- function(input, output, session) {
 
-  # Variable input module ----
-  var_inputs <- var_input_server("vars")
+  logr_msg("Initializing app server", level = "INFO")
 
-  # initialize modules ----
-  vis_output <- vis_server(id = "visualization",
-                          data_reactive = var_inputs$data,
-                          x_var_reactive = var_inputs$x_var,
-                          y_var_reactive = var_inputs$y_var,
-                          color_var_reactive = var_inputs$color_var)
+  # Add session info logging
+  logr_msg(paste("Session started for user:", session$user), level = "DEBUG")
 
-  table_output <- table_server(id = "table",
-                              data_reactive = var_inputs$data,
-                              x_var_reactive = var_inputs$x_var,
-                              y_var_reactive = var_inputs$y_var,
-                              color_var_reactive = var_inputs$color_var)
+  tryCatch({
+    # initialize modules
 
-  # report generation ----
-  report_server(id = "report",
-               dataset_name_reactive = var_inputs$dataset_name,
-               data_reactive = var_inputs$data,
-               x_var_reactive = var_inputs$x_var,
-               y_var_reactive = var_inputs$y_var,
-               color_var_reactive = var_inputs$color_var,
-               table_data = table_output$summary_data)
+# observe({
+#   browser()
+
+    selected_data <- mod_var_input_server("var_input")
+
+    logr_msg("Variable input module initialized", level = "DEBUG")
+
+    # Get reactive values for report
+    viz_module <- mod_viz_server(
+      id = "viz",
+      data = selected_data
+      )
+# })
+
+    logr_msg("Visualization module initialized", level = "DEBUG")
+
+    mod_table_server(
+      id = "table",
+      data = selected_data
+      )
+    logr_msg("Table module initialized", level = "DEBUG")
+
+    # reactive expressions for report module
+    selected_plot_type <- reactive({
+      # This will need to be passed from the viz module
+      # For now, we'll use a default
+      "type"
+    })
+
+    dataset_title <- reactive({
+      # Get the selected dataset title from the input module
+      if (!is.null(selected_data()) && length(selected_data()) > 0) {
+        # Try to get from the data or use a default
+        "Selected TidyTuesday Dataset"
+      } else {
+        NULL
+      }
+    })
+
+    # Initialize report module
+    mod_report_server("report", selected_data, selected_plot_type, dataset_title)
+    logr_msg("Report module initialized", level = "DEBUG")
+
+    logr_msg("All modules successfully initialized", level = "SUCCESS")
+
+    # Add session end logging
+    session$onSessionEnded(function() {
+      logr_msg(paste("Session ended for user:", session$user), level = "INFO")
+    })
+
+  }, error = function(e) {
+    logr_msg(paste("Critical error in app server initialization:", e$message),
+             level = "FATAL")
+
+    # Show user-friendly error
+    showNotification(
+      "Application failed to initialize. Please refresh the page.",
+      type = "error",
+      duration = NULL
+    )
+  })
 }

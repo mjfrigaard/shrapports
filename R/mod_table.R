@@ -1,123 +1,113 @@
-#' Table Module UI
+#' Table UI Module (reactable)
 #'
-#' @param id The module ID
+#' @param id Namespace ID
 #'
-#' @return A UI element
-#'
+#' @return UI element for data table output using reactable
 #' @export
-#'
-table_ui <- function(id) {
+mod_table_ui <- function(id) {
   ns <- NS(id)
-  bslib::card(
-    bslib::card_header("Data Summary"),
-    bslib::card_body(
-      gt::gt_output(ns("table"))
+  logr_msg("Initializing table UI module", level = "DEBUG")
+
+  tryCatch({
+    bslib::card(
+      bslib::card_header("Data Preview"),
+      bslib::card_body(
+        reactable::reactableOutput(ns("table"))
+      )
     )
-  )
+  }, error = function(e) {
+    logr_msg(paste("Error creating table UI:", e$message), level = "ERROR")
+
+    bslib::card(
+      bslib::card_header("Table Error"),
+      bslib::card_body(
+        h4("Error loading table interface", class = "text-danger")
+      )
+    )
+  })
 }
 
-#' Table Module Server
+#' Table Server Module (reactable)
 #'
-#' @param id The module ID
-#' @param data_reactive Reactive expression returning the dataset
-#' @param x_var_reactive Reactive expression returning the x variable
-#' @param y_var_reactive Reactive expression returning the y variable
-#' @param color_var_reactive Reactive expression returning the color variable
-#'
-#' @return A Shiny server module
+#' @param id Module ID
+#' @param data A reactive expression returning the dataset list
 #'
 #' @export
-#'
-table_server <- function(id, data_reactive, x_var_reactive, y_var_reactive, color_var_reactive = NULL) {
+mod_table_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
 
-    # Create summary table for scatter plot
-    summary_data <- reactive({
-      req(data_reactive(), x_var_reactive(), y_var_reactive())
+    logr_msg("Initializing table server module", level = "DEBUG")
 
-      df <- data_reactive()
-      x_var <- x_var_reactive()
-      y_var <- y_var_reactive()
+    output$table <- reactable::renderReactable({
 
-      # Calculate overall correlation
-      x_data <- df[[x_var]]
-      y_data <- df[[y_var]]
-      overall_cor <- cor(x_data, y_data, use = "pairwise.complete.obs")
+      tryCatch({
+        req(data())
 
-      result <- data.frame(
-        Group = "Overall",
-        N = sum(!is.na(x_data) & !is.na(y_data)),
-        Mean_X = mean(x_data, na.rm = TRUE),
-        SD_X = sd(x_data, na.rm = TRUE),
-        Mean_Y = mean(y_data, na.rm = TRUE),
-        SD_Y = sd(y_data, na.rm = TRUE),
-        Correlation = overall_cor
-      )
-
-      # If we have a color variable, add group-specific summaries
-      if (!is.null(color_var_reactive())) {
-        color_var <- color_var_reactive()
-
-        # Check if the color variable exists in the data
-        if (color_var %in% names(df)) {
-          group_vals <- unique(df[[color_var]])
-
-          for (grp in group_vals) {
-            # Filter data for this group
-            grp_data <- df[df[[color_var]] == grp, ]
-            grp_x <- grp_data[[x_var]]
-            grp_y <- grp_data[[y_var]]
-
-            # Calculate correlation for this group
-            grp_cor <- cor(grp_x, grp_y, use = "pairwise.complete.obs")
-
-            # Add to results
-            result <- rbind(result, data.frame(
-              Group = as.character(grp),
-              N = sum(!is.na(grp_x) & !is.na(grp_y)),
-              Mean_X = mean(grp_x, na.rm = TRUE),
-              SD_X = sd(grp_x, na.rm = TRUE),
-              Mean_Y = mean(grp_y, na.rm = TRUE),
-              SD_Y = sd(grp_y, na.rm = TRUE),
-              Correlation = grp_cor
-            ))
-          }
+        if (length(data()) == 0) {
+          logr_msg("No data available for table rendering", level = "WARN")
+          return(NULL)
         }
-      }
 
-      return(result)
-    })
+        df_list <- data()
 
-    # Generate table
-    output$table <- gt::render_gt({
-      req(summary_data())
+        # If multiple datasets, show the first one but indicate which file
+        first_df <- df_list[[1]]
+        first_name <- names(df_list)[1]
 
-      gt::gt(summary_data()) |>
-        gt::tab_header(
-          title = paste("Correlation Analysis:", y_var_reactive(), "vs", x_var_reactive())
-        ) |>
-        gt::fmt_number(
-          columns = c("Mean_X", "SD_X", "Mean_Y", "SD_Y", "Correlation"),
-          decimals = 3
-        ) |>
-        gt::cols_label(
-          Group = if (!is.null(color_var_reactive())) stringr::str_to_title(color_var_reactive()) else "Group",
-          Mean_X = paste("Mean", x_var_reactive()),
-          SD_X = paste("SD", x_var_reactive()),
-          Mean_Y = paste("Mean", y_var_reactive()),
-          SD_Y = paste("SD", y_var_reactive()),
-          Correlation = "Correlation (r)"
-        ) |>
-        gt::tab_footnote(
-          footnote = "Pearson correlation coefficient",
-          locations = gt::cells_column_labels(columns = "Correlation")
+        logr_msg(paste("Rendering table for file:", first_name,
+                      "with", nrow(first_df), "rows and",
+                      ncol(first_df), "columns"), level = "INFO")
+
+        if (!is.data.frame(first_df)) {
+          logr_msg("First dataset is not a data frame", level = "ERROR")
+          return(NULL)
+        }
+
+        # Limit to first 1000 rows for performance
+        display_df <- if (nrow(first_df) > 1000) {
+          logr_msg("Large dataset detected - limiting to first 1000 rows", level = "INFO")
+          head(first_df, 1000)
+        } else {
+          first_df
+        }
+
+        # Create subtitle showing which file and if there are more
+        subtitle <- if (length(df_list) > 1) {
+          paste("Showing:", first_name, "(", length(df_list), "files total )")
+        } else {
+          paste("File:", first_name)
+        }
+
+        reactable::reactable(
+          display_df,
+          searchable = TRUE,
+          sortable = TRUE,
+          pagination = TRUE,
+          defaultPageSize = 20,
+          showPageSizeOptions = TRUE,
+          pageSizeOptions = c(5, 10, 20, 50),
+          highlight = TRUE,
+          bordered = TRUE,
+          striped = TRUE,
+          resizable = TRUE,
+          wrap = FALSE,
+          defaultColDef = reactable::colDef(
+            minWidth = 100,
+            headerStyle = list(background = "#f7f7f8")
+          )
         )
-    })
 
-    # Return the table data for use in report generation
-    return(list(
-      table_output = reactive(output$table),
-      summary_data = summary_data
-    ))
+      }, error = function(e) {
+        logr_msg(paste("Error rendering table:", e$message), level = "ERROR")
+
+        # Return an empty reactable with error message
+        reactable::reactable(
+          data.frame(Error = paste("Failed to load data:", e$message)),
+          searchable = FALSE,
+          sortable = FALSE,
+          pagination = FALSE
+        )
+      })
+    })
   })
 }

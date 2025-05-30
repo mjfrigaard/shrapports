@@ -1,34 +1,24 @@
-#' The application UI
+#' Application UI
 #'
-#' @return A Shiny UI
+#' Constructs the user interface using `bslib` components.
+#'
+#' @return A UI definition for a Shiny app
 #'
 #' @export
-#'
 app_ui <- function() {
   bslib::page_sidebar(
-    title = tags$strong(
-      tags$code("shrapports"),
-      tags$em("- Data Explorer with Downloadable Report")
-      ),
+    title = "shrapports (a #TidyTuesday explorer)",
     sidebar = bslib::sidebar(
-      width = "320px",
-      var_input_ui("vars"),
-      report_ui("report")
+      mod_var_input_ui("var_input"),
+      mod_report_ui("report")
     ),
-    bslib::card(
-      bslib::card_header(
-        em("Select a dataset, then download the report.")
-      ),
-      bslib::card_body(
-        fillable = TRUE,
-        vis_ui("visualization")
-      ),
-      bslib::card(
-        bslib::card_body(
-          fillable = TRUE,
-          table_ui("table")
+    bslib::navset_tab(
+      bslib::nav_panel("Inspect",
+        mod_viz_ui("viz")
+        ),
+      bslib::nav_panel("Preview",
+        mod_table_ui("table")
         )
-      )
     )
   )
 }

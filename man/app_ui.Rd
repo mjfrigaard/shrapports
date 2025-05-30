@@ -2,13 +2,13 @@
 % Please edit documentation in R/app_ui.R
 \name{app_ui}
 \alias{app_ui}
-\title{The application UI}
+\title{Application UI}
 \usage{
 app_ui()
 }
 \value{
-A Shiny UI
+A UI definition for a Shiny app
 }
 \description{
-The application UI
+Constructs the user interface using \code{bslib} components.
 }

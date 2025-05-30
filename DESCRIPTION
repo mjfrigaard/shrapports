@@ -7,18 +7,23 @@ Authors@R:
 Description: A Shiny application that demonstrates downloadable R Markdown
     reports with modular design.
 License: MIT + file LICENSE
+Depends: 
+    R (>= 3.5)
 Imports:
     bslib,
     dplyr,
     ggplot2,
-    gt,
-    palmerpenguins,
+    inspectdf,
+    logger,
+    reactable,
     rmarkdown,
     shiny,
-    tidyr
+    tidytuesdayR
+Suggests: 
+    knitr
+VignetteBuilder: 
+    quarto
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-VignetteBuilder: 
-    quarto

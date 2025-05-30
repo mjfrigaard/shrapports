@@ -2,20 +2,17 @@
 % Please edit documentation in R/app_server.R
 \name{app_server}
 \alias{app_server}
-\title{The application server logic}
+\title{Application Server}
 \usage{
 app_server(input, output, session)
 }
 \arguments{
-\item{input}{Shiny input}
+\item{input}{Shiny input object}
 
-\item{output}{Shiny output}
+\item{output}{Shiny output object}
 
-\item{session}{Shiny session}
-}
-\value{
-A Shiny server function
+\item{session}{Shiny session object}
 }
 \description{
-The application server logic
+Defines the server logic for the modular Tidy Tuesday app.
 }

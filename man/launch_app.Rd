@@ -2,16 +2,21 @@
 % Please edit documentation in R/launch_app.R
 \name{launch_app}
 \alias{launch_app}
-\title{Launch the shrapports application}
+\title{Launch the Tidy Tuesday Explorer App}
 \usage{
-launch_app()
+launch_app(..., log_file = NULL, json = FALSE)
+}
+\arguments{
+\item{...}{Additional arguments passed to shinyApp()}
+
+\item{log_file}{Optional path to log file for application logs}
+
+\item{json}{Logical, whether to use JSON logging format}
+}
+\value{
+A Shiny app object
 }
 \description{
-This function starts the Shiny application for generating
-downloadable reports from data visualizations.
-}
-\examples{
-\dontrun{
-launch_app()
-}
+This function launches the Shiny application for exploring Tidy Tuesday
+datasets.
 }
