@@ -13,14 +13,22 @@ Imports:
     bslib,
     dplyr,
     ggplot2,
+    gt,
     inspectdf,
+    knitr,
     logger,
+    purrr,
     reactable,
     rmarkdown,
     shiny,
-    tidytuesdayR
+    snakecase,
+    tidyselect,
+    tidytuesdayR,
+    tools,
+    yaml
 Suggests: 
-    knitr
+    quarto,
+    testthat
 VignetteBuilder: 
     quarto
 Encoding: UTF-8

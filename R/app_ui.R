@@ -7,17 +7,26 @@
 #' @export
 app_ui <- function() {
   bslib::page_sidebar(
-    title = "shrapports (a #TidyTuesday explorer)",
+    title = h4(strong("shrapports"), "(",em("explore #TidyTuesday data"), ")"),
     sidebar = bslib::sidebar(
+      padding = c(12,12,12,12),
+      width = "280px",
       mod_var_input_ui("var_input"),
+      tags$hr(),
       mod_report_ui("report")
     ),
     bslib::navset_tab(
-      bslib::nav_panel("Inspect",
-        mod_viz_ui("viz")
+      bslib::nav_panel("Visualization",
+          br(),
+          strong("Reactive values from ",
+              code("app_server()")
+            ),
+          verbatimTextOutput("dev"),
+          br(),
+          mod_viz_ui("viz")
         ),
-      bslib::nav_panel("Preview",
-        mod_table_ui("table")
+      bslib::nav_panel("Data Table",
+          mod_table_ui("table")
         )
     )
   )

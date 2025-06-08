@@ -9,6 +9,7 @@ output:
     toc_float: true
     code_folding: hide
     df_print: paged
+    self_contained: true
 params:
   dataset_title: "Dataset"
   title: "TidyTuesday Report"
@@ -24,13 +25,16 @@ knitr::opts_chunk$set(
   message = FALSE,
   fig.width = 10,
   fig.height = 6,
-  dpi = 300
+  dpi = 300,
+  results = 'asis'
 )
 
 # Load required packages
 library(ggplot2)
 library(gt)
 library(dplyr)
+library(knitr)
+library(htmltools)
 ```
 
 ## Executive Summary
@@ -39,15 +43,15 @@ This report provides an overview of the **`r params$dataset_title`** dataset fro
 
 **Report Generated:** `r Sys.time()`
 
-```{r data-info}
+```{r data-info, results='markup'}
 # Get basic info about the data
 if (!is.null(params$data_list) && length(params$data_list) > 0) {
   first_df <- params$data_list[[1]]
   dataset_names <- names(params$data_list)
   
-  cat("**Number of datasets:**", length(params$data_list), "\n")
-  cat("**Dataset names:**", paste(dataset_names, collapse = ", "), "\n")
-  cat("**Main dataset dimensions:**", nrow(first_df), "rows ×", ncol(first_df), "columns\n")
+  cat("**Number of datasets:**", length(params$data_list), "\n\n")
+  cat("**Dataset names:**", paste(dataset_names, collapse = ", "), "\n\n")
+  cat("**Main dataset dimensions:**", nrow(first_df), "rows ×", ncol(first_df), "columns\n\n")
 }
 ```
 
@@ -84,16 +88,16 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
     dataset_name <- names(params$data_list)[i]
     df <- params$data_list[[i]]
     
-    cat("### Dataset:", dataset_name, "\n\n")
+    cat("#### Dataset:", dataset_name, "\n\n")
     
-    # Create summary table using gt
+    # Create summary table using gt with explicit HTML rendering
     summary_data <- data.frame(
       Metric = c("Rows", "Columns", "Missing Values", "Complete Rows", "Data Types"),
       Value = c(
-        nrow(df),
-        ncol(df),
-        sum(is.na(df)),
-        sum(complete.cases(df)),
+        format(nrow(df), big.mark = ","),
+        format(ncol(df), big.mark = ","),
+        format(sum(is.na(df)), big.mark = ","),
+        format(sum(complete.cases(df)), big.mark = ","),
         paste(unique(sapply(df, class)), collapse = ", ")
       ),
       stringsAsFactors = FALSE
@@ -111,9 +115,15 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
       gt::tab_style(
         style = gt::cell_fill(color = "#f8f9fa"),
         locations = gt::cells_column_labels()
+      ) |>
+      gt::tab_options(
+        table.width = "100%",
+        table.font.size = "14px"
       )
     
-    print(summary_table)
+    # Render gt table as HTML and print
+    table_html <- gt::as_raw_html(summary_table)
+    cat(table_html)
     cat("\n\n")
   }
 }
@@ -128,7 +138,7 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
     dataset_name <- names(params$data_list)[i]
     df <- params$data_list[[i]]
     
-    cat("### Sample Data:", dataset_name, "\n\n")
+    cat("#### Sample Data:", dataset_name, "\n\n")
     
     # Show first 10 rows with gt
     preview_df <- head(df, 10)
@@ -146,7 +156,7 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
         subtitle = paste("Showing first", min(10, nrow(df)), "rows")
       ) |>
       gt::tab_style(
-        style = gt::cell_text(size = "small"),
+        style = gt::cell_text(size = "12px"),
         locations = gt::cells_body()
       ) |>
       gt::tab_style(
@@ -154,11 +164,14 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
         locations = gt::cells_column_labels()
       ) |>
       gt::tab_options(
-        table.font.size = "small",
+        table.width = "100%",
+        table.font.size = "12px",
         data_row.padding = "3px"
       )
     
-    print(preview_table)
+    # Render gt table as HTML and print
+    table_html <- gt::as_raw_html(preview_table)
+    cat(table_html)
     cat("\n\n")
   }
 }
@@ -210,9 +223,15 @@ if (!is.null(params$data_list) && length(params$data_list) > 0) {
         columns = Missing_Percent,
         rows = Missing_Percent > 50
       )
+    ) |>
+    gt::tab_options(
+      table.width = "80%",
+      table.font.size = "13px"
     )
   
-  print(var_table)
+  # Render gt table as HTML and print
+  table_html <- gt::as_raw_html(var_table)
+  cat(table_html)
 }
 ```
 

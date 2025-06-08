@@ -1,0 +1,65 @@
+---
+title: "App"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "# " 
+
+execute:
+  echo: true
+
+vignette: >
+  %\VignetteIndexEntry{App}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(inspectdf)
+library(lobstr)
+```
+
+```{r}
+#| label: package
+library(shrapports)
+```
+
+## App structure 
+
+The application's functions are in the abstract syntax tree below:
+
+```{r}
+#| eval: true
+#| include: true
+#| echo: false
+#| comment: ""
+ast(
+  launch_app(
+    app_ui(
+      mod_var_input_ui(),
+      mod_viz_ui(),
+      mod_table_ui(),
+      mod_report_ui()
+    ),
+    app_server(
+      mod_var_input_server(),
+      mod_viz_server(),
+      mod_table_server(),
+      mod_report_server()
+    )
+  )
+)
+```
+
+
+### Variable inputs 
+
+The variable inputs are the 

@@ -43,19 +43,25 @@
 #' logr_msg("Application started.")
 #'
 #' # log an error message to the console and a file in plain text format
-#' logr_msg(message = "Failed to connect to the database.",
-#'           level = "ERROR",
-#'           log_file = "error_log.txt")
+#' logr_msg(
+#'   message = "Failed to connect to the database.",
+#'   level = "ERROR",
+#'   log_file = "error_log.txt"
+#' )
 #'
 #' # log a success message in JSON format
-#' logr_msg(message = "User login successful.",
-#'          level = "SUCCESS",
-#'          log_file = "app_log.json",
-#'          json = TRUE)
+#' logr_msg(
+#'   message = "User login successful.",
+#'   level = "SUCCESS",
+#'   log_file = "app_log.json",
+#'   json = TRUE
+#' )
 #'
 #' # log a warning message to the console only
-#' logr_msg(message = "Low memory warning.",
-#'          level = "WARN")
+#' logr_msg(
+#'   message = "Low memory warning.",
+#'   level = "WARN"
+#' )
 #'
 #' @seealso
 #' - [logger::log_appender()] for configuring log destinations.
@@ -65,20 +71,18 @@
 #' @export
 #'
 logr_msg <- function(message, level = "INFO", log_file = NULL, json = FALSE) {
-
   # Set default formatter
   logger::log_formatter(formatter = logger::formatter_glue)
 
   # Log to console by default
-  switch(
-    level,
+  switch(level,
     "FATAL"   = logger::log_fatal("{message}"),
     "ERROR"   = logger::log_error("{message}"),
     "WARN"    = logger::log_warn("{message}"),
     "SUCCESS" = logger::log_success("{message}"),
     "DEBUG"   = logger::log_debug("{message}"),
     "TRACE"   = logger::log_trace("{message}"),
-    logger::log_info("{message}")  # Default fallback
+    logger::log_info("{message}") # Default fallback
   )
 
   # Log to file only if log_file is specified

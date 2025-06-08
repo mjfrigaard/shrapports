@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_tt_data.R
 \name{get_tt_data}
 \alias{get_tt_data}
-\title{Get TidyTuesday Data with File Names (Enhanced)}
+\title{Get TidyTuesday Data with File Names}
 \usage{
 get_tt_data(title, preserve_original_names = FALSE)
 }
@@ -14,7 +14,8 @@ names if file names are not available (default: FALSE)}
 }
 \value{
 A named list containing the dataset(s) where names correspond to
-the original CSV file names from TidyTuesday
+the original CSV file names from TidyTuesday. The list includes an attribute
+'clean_title' with the cleaned snake_case version of the dataset title.
 }
 \description{
 Retrieves TidyTuesday datasets based on the dataset title and returns them
@@ -22,10 +23,15 @@ with the original file names as list element names. Includes robust handling
 of various edge cases and file name formats.
 }
 \examples{
-ttd <- get_tt_data("Powerlifting")
+ttd <- get_tt_data("Moore’s Law")
 str(ttd)
-ttd <- get_tt_data("SuperBowl Ads")
+attr(ttd, "clean_title")  # "moores_law"
+
+ttd <- get_tt_data("House Price Index & Mortgage Rates")
 str(ttd)
-ttd <- get_tt_data("Monster Movies")
+attr(ttd, "clean_title")  # "house_price_index_mortgage_rates"
+
+ttd <- get_tt_data("LEGO database")
 str(ttd)
+attr(ttd, "clean_title")  # "lego_database"
 }

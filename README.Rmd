@@ -35,7 +35,7 @@ pak::pak("mjfrigaard/shrapports")
 
 ```{r}
 #| label: example
-#| eval: false 
+#| eval: false
 library(shrapports)
 launch_app()
 ```

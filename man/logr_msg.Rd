@@ -60,19 +60,25 @@ logging and integrates JSON logging using the \code{jsonlite} package.
 logr_msg("Application started.")
 
 # log an error message to the console and a file in plain text format
-logr_msg(message = "Failed to connect to the database.",
-          level = "ERROR",
-          log_file = "error_log.txt")
+logr_msg(
+  message = "Failed to connect to the database.",
+  level = "ERROR",
+  log_file = "error_log.txt"
+)
 
 # log a success message in JSON format
-logr_msg(message = "User login successful.",
-         level = "SUCCESS",
-         log_file = "app_log.json",
-         json = TRUE)
+logr_msg(
+  message = "User login successful.",
+  level = "SUCCESS",
+  log_file = "app_log.json",
+  json = TRUE
+)
 
 # log a warning message to the console only
-logr_msg(message = "Low memory warning.",
-         level = "WARN")
+logr_msg(
+  message = "Low memory warning.",
+  level = "WARN"
+)
 
 }
 \seealso{

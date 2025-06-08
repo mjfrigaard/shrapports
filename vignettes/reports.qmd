@@ -1,0 +1,85 @@
+---
+title: "Reports"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "# " 
+
+execute:
+  echo: true
+
+vignette: >
+  %\VignetteIndexEntry{Reports}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(inspectdf)
+library(lobstr)
+```
+
+```{r}
+#| label: package
+library(shrapports)
+```
+
+## Reports 
+
+The `get_template_path()` function return the specified 
+
+```{r}
+#| label: get_template_path_rmd
+identical(
+  # response from function
+  x = shrapports:::get_template_path('rmarkdown'), 
+  # response from system.file()
+  y = system.file("rmarkdown", "report_template.Rmd", 
+                  package = "shrapports"))
+```
+
+```{r}
+#| label: get_template_path_qmd
+identical(
+  # response from function
+  x = shrapports:::get_template_path('quarto'), 
+  # response from system.file()
+  y = system.file("quarto", "report_template.qmd", 
+                  package = "shrapports"))
+```
+
+```{r}
+#| label: rmd_create_fallback_template
+rmd_temp <- shrapports:::create_fallback_template(format = "rmarkdown")
+basename(rmd_temp)
+```
+
+
+```{r}
+#| label: qmd_create_fallback_template
+qmd_temp <- shrapports:::create_fallback_template(format = "quarto")
+basename(qmd_temp)
+```
+
+```{r}
+#| label: unlink_create_fallback_template
+#| echo: false 
+#| results: hide
+unlink(rmd_temp)
+unlink(qmd_temp)
+```
+
+### The download handler
+
+The download handler (`downloadHandler()`) can be paired with any download UI function (`downloadButton()` or `downloadLink()`).
+
+### Rendering with parameters 
+

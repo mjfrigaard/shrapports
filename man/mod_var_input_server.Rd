@@ -2,7 +2,7 @@
 % Please edit documentation in R/mod_var_input.R
 \name{mod_var_input_server}
 \alias{mod_var_input_server}
-\title{Variable Input Server Module}
+\title{Variable Input Server Module - Enhanced with Dataset Title}
 \usage{
 mod_var_input_server(id)
 }
@@ -10,8 +10,8 @@ mod_var_input_server(id)
 \item{id}{Module ID}
 }
 \value{
-A reactive expression containing the dataset list
+A list with reactive expressions for both data and dataset title
 }
 \description{
-Variable Input Server Module
+Variable Input Server Module - Enhanced with Dataset Title
 }

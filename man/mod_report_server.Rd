@@ -2,7 +2,7 @@
 % Please edit documentation in R/mod_report.R
 \name{mod_report_server}
 \alias{mod_report_server}
-\title{Report Server Module}
+\title{Report Server Module with Enhanced Quarto Error Handling}
 \usage{
 mod_report_server(id, data, selected_plot_type, dataset_title)
 }
@@ -16,5 +16,5 @@ mod_report_server(id, data, selected_plot_type, dataset_title)
 \item{dataset_title}{A reactive expression returning the dataset title}
 }
 \description{
-Report Server Module
+Report Server Module with Enhanced Quarto Error Handling
 }

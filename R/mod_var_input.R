@@ -14,10 +14,13 @@ mod_var_input_ui <- function(id) {
       logr_msg(paste("Available dataset choices:", length(choices)), level = "INFO")
 
       tagList(
-        selectInput(ns("dataset_title"), "Choose Dataset Title:",
+        selectInput(
+          inputId = ns("dataset_title"),
+          label = strong("Choose Dataset Title:"),
           choices = choices,
-          selected = "Student Loan Debt"
-        )
+          selected = "Moore’s Law"
+        ),
+        verbatimTextOutput(ns("vals"))
       )
     },
     error = function(e) {
@@ -28,19 +31,19 @@ mod_var_input_ui <- function(id) {
         h4("Error loading dataset choices", class = "text-danger"),
         p("Please check the data availability.")
       )
-    })
+    }
+  )
 }
 
-#' Variable Input Server Module
+#' Variable Input Server Module - Enhanced with Dataset Title
 #'
 #' @param id Module ID
 #'
-#' @return A reactive expression containing the dataset list
+#' @return A list with reactive expressions for both data and dataset title
 #'
 #' @export
 #'
 mod_var_input_server <- function(id) {
-
   moduleServer(id, function(input, output, session) {
 
     logr_msg("Initializing variable input server module", level = "DEBUG")
@@ -50,26 +53,37 @@ mod_var_input_server <- function(id) {
       logr_msg(paste("User selected dataset:", input$dataset_title), level = "INFO")
 
       tryCatch({
-          result <- get_tt_data(input$dataset_title)
-          if (length(result) == 0) {
-            logr_msg("Empty dataset returned", level = "WARN")
-            showNotification("No data available for selected dataset",
-              type = "warning", duration = 5
-            )
-          } else {
-            logr_msg("Dataset successfully loaded in reactive", level = "SUCCESS")
-          }
-          return(result)
-        },
-        error = function(e) {
-          logr_msg(paste("Error in data reactive:", e$message), level = "ERROR")
-          showNotification(paste("Error loading data:", e$message),
-            type = "error", duration = 10
-          )
-          return(list())
-        })
+        result <- get_tt_data(input$dataset_title)
+        if (length(result) == 0) {
+          logr_msg("Empty dataset returned", level = "WARN")
+          showNotification("No data available for selected dataset",
+                         type = "warning", duration = 5)
+        } else {
+          logr_msg("Dataset successfully loaded in reactive", level = "SUCCESS")
+        }
+        return(result)
+
+      }, error = function(e) {
+        logr_msg(paste("Error in data reactive:", e$message), level = "ERROR")
+        showNotification(paste("Error loading data:", e$message),
+                       type = "error", duration = 10)
+        return(list())
+      })
     })
 
-    return(data)
+    # print names of datasets from title
+    output$vals <- renderPrint({
+      req(data())
+        title <- attr(data(), "clean_title")
+        ds_names <- names(data())
+        glue::glue("The {title} and {ds_names}")
+    }) |> 
+      bindEvent(input$dataset_title)
+
+    # return both data and dataset title
+    return(list(
+      data = data,
+      dataset_title = reactive({ input$dataset_title })
+    ))
   })
 }

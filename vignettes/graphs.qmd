@@ -1,0 +1,642 @@
+---
+title: "Graphs"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "# " 
+    fig-dpi: 320
+    fig-width: 6
+    out-width: '80%'
+    fig-format: png
+    fig-align: 'center'
+
+execute:
+  echo: true
+  error: true
+
+vignette: >
+  %\VignetteIndexEntry{Graphs}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(inspectdf)
+library(lobstr)
+```
+
+```{r}
+#| label: package
+library(shrapports)
+```
+
+Below are examples of the data visualizations using `inspectdf` in the Shiny app. 
+
+## Data 
+
+We'll need data to demonstrate how the `inspect_plot()` function works. The `get_tt_data()` function can be used to collect [TidyTuesday](https://github.com/rfordatascience/tidytuesday) datasets, and we'll create four lists of data: 
+
+### One dataset (`ttd`)
+
+`"Netflix Titles"` has a single dataset:
+
+```{r}
+#| label: ttd_netflix_titles
+#| eval: true
+ttd <- get_tt_data("Netflix Titles")
+attr(ttd, "clean_title")
+```
+
+### Two datasets (`ttd2`)
+
+For a list with two datasets, we'll use the `"Space Launches"` data:
+
+```{r}
+#| label: ttd2_space_launches
+#| eval: true
+ttd2 <- get_tt_data("Space Launches")
+attr(ttd2, "clean_title")
+```
+
+### Three datasets (`ttd3`)
+
+`"Moore's Law"` contains three datasets: 
+
+```{r}
+#| label: ttd3_moores_law
+#| eval: true
+ttd3 <- get_tt_data("Moore’s Law")
+str(ttd3)
+```
+
+```{r}
+attr(ttd3, "clean_title")
+```
+
+### Many datasets (`ttd_many`)
+
+Finally, we'll download the `"LEGO database"` data with 12 datasets into the `ttd_many` list:
+
+```{r}
+#| label: ttd_many_lego_database
+#| eval: true
+ttd_many <- get_tt_data("LEGO database")
+attr(ttd_many, "clean_title")
+```
+
+## Utility functions
+
+The `inspect_plot()` function has the following utility functions: 
+
+### ttd_length()
+
+Check the length of the `ttd3` list: 
+
+```{r}
+#| label: ttd_length
+ttd_length(ttd = ttd3)
+```
+
+### check_ttd_num_cols()
+
+Check if datasets have numerical columns: 
+
+```{r}
+#| label: check_ttd_num_cols
+check_ttd_num_cols(ttd = ttd3)
+```
+  - If so, do they have two or more?
+
+### check_ttd_cat_cols()
+
+Check if datasets have categorical (character) columns
+
+```{r}
+#| label: check_ttd_cat_cols
+check_ttd_cat_cols(ttd3)
+```
+
+### check_ttd_list_cols()
+
+Check list columns
+
+```{r}
+#| label: check_ttd_list_cols
+check_ttd_list_cols(ttd3)
+```
+
+### check_ttd_log_cols()
+
+Check logical columns:
+
+```{r}
+#| label: check_ttd_log_cols
+check_ttd_log_cols(ttd3)
+```
+
+### check_ttd_date_cols()
+
+Check date columns:
+
+```{r}
+#| label: check_ttd_date_cols
+check_ttd_date_cols(ttd3)
+```
+
+### check_col_types()
+
+These are wrapped in the `check_col_types()` function:
+
+```{r}
+#| label: check_col_types
+identical( # check the 
+  x = check_col_types(ttd = ttd3, type = "cat"), 
+  y = check_ttd_cat_cols(ttd3)
+)
+identical(
+  x = check_col_types(ttd = ttd3, type = "date"), 
+  y = check_ttd_date_cols(ttd3)
+)
+identical(
+  x = check_col_types(ttd = ttd3, type = "log"), 
+  y = check_ttd_log_cols(ttd3)
+)
+identical(
+  x = check_col_types(ttd = ttd3, type = "num"), 
+  y = check_ttd_num_cols(ttd3)
+)
+```
+
+The functions above allow us to collect the following: 
+
+1. Determine the number of datasets in the `ttd` list  	
+2. Determine the name of the datasets in the `ttd` list  	
+3. Determine the number of numerical columns in each dataset in the `ttd` list	  
+4. Determine the names of any intersecting numerical columns in each dataset in the `ttd` list	  
+5. Determine the number of categorical columns in each dataset in the `ttd` list		
+6. Determine the names of any intersecting categorical columns in each dataset in the `ttd` list		
+7. Determine the number of logical columns in each dataset in the `ttd` list	
+8. Determine the number of date columns in each dataset in the `ttd` list		
+8. Determine the names of any date columns in each dataset in the `ttd` list		
+9. Determine the number of list columns in each dataset in the `ttd` list	
+10. Determine the names of any list columns in each dataset in the `ttd` list	
+
+## Function logic
+
+Using the functions above, write the custom `inspect_plot()` function and have it adhere to the following rules: 
+
+### inspect_types()
+
+#### `if (length(ttd) == 1)`
+
+If one dataset in `ttd`: 
+
+```{r}
+inspect_cat(
+  df1 = ttd2[[1]],
+  df2 = NULL,
+  include_int = TRUE) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`: 
+
+  - check for intersecting columns  
+  
+```{r}
+length(intersect(
+  x = names(ttd2[[1]]), 
+  y = names(ttd2[[2]]))) > 0
+```
+
+  - if columns intersect, store column names as `intersecting_columns`
+
+```{r}
+intersecting_columns <- intersect(x = names(ttd2[[1]]), y = names(ttd2[[2]]))
+```
+
+  - Then use `intersecting_columns` to subset `ttd` for the `inspect_cat()` function: 
+
+```{r}
+inspect_cat(
+  df1 = ttd2[[1]][intersecting_columns], 
+  df2 = ttd2[[1]][intersecting_columns], 
+  include_int = TRUE) |> 
+	show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`: 
+
+```{r}
+inspect_cat(df1 = ttd3[[1]],
+  df2 = NULL,
+  include_int = TRUE) |>
+  show_plot(text_labels = TRUE)
+inspect_cat(df1 = ttd3[[2]],
+  df2 = NULL,
+  include_int = TRUE) |>
+  show_plot(text_labels = TRUE)
+inspect_cat(df1 = ttd3[[3]],
+  df2 = NULL,
+  include_int = TRUE) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+### inspect_mem()
+
+#### `if (length(ttd) == 1)` 
+
+If one dataset in `ttd`:
+
+```{r}
+inspect_mem(df1 = ttd[[1]], df2 = NULL) |> 
+	show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`:
+
+```{r}
+inspect_mem(df1 = ttd2[[1]], df2 = ttd2[[2]]) |> 
+	show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`:
+
+```{r}
+inspect_mem(
+  df1 = ttd3[[1]], 
+  df2 = NULL) |>
+  show_plot(text_labels = TRUE)
+inspect_mem(
+  df1 = ttd3[[2]], 
+  df2 = NULL) |>
+  show_plot(text_labels = TRUE)
+inspect_mem(
+  df1 = ttd3[[3]], 
+  df2 = NULL) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+### inspect_cor()
+
+#### `if (length(ttd) == 1)`
+
+If one dataset in `ttd`:
+  
+  - check if there are at least 2 numeric columns in the datasets in the `ttd` list	
+    - Plot the dataset with at least two numeric columns
+  
+```{r}
+if (ttd_length(ttd2) == 2) { # check for two datasets
+  # check for two numerical columns in ttd[[1]]
+  if (length(check_ttd_num_cols(ttd = ttd2)[[1]]) == 2) { 
+    # plot first dataset
+    inspect_cor(
+      df1 = ttd2[[1]],
+      df2 = NULL, 
+      method = "pearson", 
+      with_col = NULL, 
+      alpha = 0.05) |> 
+      show_plot(text_labels = TRUE)
+    # check for two numerical columns in ttd[[2]]
+  } else if (length(check_ttd_num_cols(ttd = ttd2)[[2]]) >= 2) { 
+    # plot second dataset
+    inspect_cor(
+      df1 = ttd2[[2]],
+      df2 = NULL, 
+      method = "pearson", 
+      with_col = NULL, 
+      alpha = 0.05) |> 
+      show_plot(text_labels = TRUE)
+  } else {
+    logr_msg("Error", level = "INFO")
+  }
+}
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`:
+
+  - check if there is at least 1 numeric column in each dataset from the `ttd` list	
+	
+```{r}
+check_col_types(ttd2, type = "num")
+```
+
+```{r}
+check_col_types(ttd3, type = "num")
+```
+
+  - Run `inspect_cor()`if at least one numerical column is in each dataset: 
+  
+```{r}
+inspect_cor(
+  df1 = ttd2[[1]], 
+  df2 = ttd2[[2]], 
+  method = "pearson", 
+  with_col = NULL, 
+  alpha = 0.05) |> 
+  show_plot(text_labels = TRUE)
+```
+
+```{r}
+inspect_cor(
+  df1 = ttd3[[1]], 
+  df2 = ttd3[[2]], 
+  method = "pearson", 
+  with_col = NULL, 
+  alpha = 0.05) |> 
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`:
+
+  - check if there is at least 1 numeric column in each of the datasets from the `ttd` list:
+	
+```{r}
+check_col_types(ttd3, type = "num")
+```
+
+  - Run the following on all datasets with at least two numerical columns. 
+
+```{r}
+inspect_cor(
+  df1 = ttd3[[1]],
+  df2 = NULL,
+  method = "pearson",
+  with_col = NULL,
+  alpha = 0.05) |>
+  show_plot(text_labels = TRUE)
+inspect_cor(
+  df1 = ttd3[[2]],
+  df2 = NULL,
+  method = "pearson",
+  with_col = NULL,
+  alpha = 0.05) |>
+  show_plot(text_labels = TRUE)
+inspect_cor(
+  df1 = ttd3[[3]],
+  df2 = NULL,
+  method = "pearson",
+  with_col = NULL,
+  alpha = 0.05) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+### inspect_imb()
+
+#### `if (length(ttd) == 1)`
+
+If one dataset in `ttd`:
+
+```{r}
+inspect_imb(df1 = ttd[[1]],
+  df2 = NULL,
+  include_na = FALSE) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`:
+
+```{r}
+inspect_imb(
+  df1 = ttd2[[1]], 
+  df2 = ttd2[[2]], 
+  include_na = FALSE) |> 
+	show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`:
+
+```{r}
+inspect_imb(
+  df1 = ttd3[[1]],
+  df2 = NULL,
+  include_na = FALSE) |>
+  show_plot(text_labels = TRUE)
+inspect_imb(
+  df1 = ttd3[[2]],
+  df2 = NULL,
+  include_na = FALSE) |>
+  show_plot(text_labels = TRUE)
+inspect_imb(
+  df1 = ttd3[[3]],
+  df2 = NULL,
+  include_na = FALSE) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+### inspect_num()
+
+#### `if (length(ttd) == 1)`
+
+If one dataset in `ttd`:
+
+  - check if there is at least 1 numeric column in the dataset in the `ttd` list	
+```{r}
+check_ttd_num_cols(ttd)
+```
+  
+    - if so, run: 
+
+```{r}
+inspect_num(
+  df1 = ttd[[1]],
+  df2 = NULL,
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`:
+
+  - check if there is at least 1 numeric column in each of the two datasets in the `ttd` list	
+
+    - if so, run: 
+
+```{r}
+inspect_num(
+  df1 = ttd2[[1]],
+  df2 = ttd2[[2]],
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+```
+
+  - if there is only one numeric column, run the following on the dataset with the numeric column:
+
+```{r}
+inspect_num(
+  df1 = ttd[[1]],
+  df2 = NULL,
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`:
+
+```{r}
+inspect_num(
+  df1 = ttd3[[1]],
+  df2 = NULL,
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+inspect_num(
+  df1 = ttd3[[2]],
+  df2 = NULL,
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+inspect_num(
+  df1 = ttd3[[3]],
+  df2 = NULL,
+  breaks = 20,
+  include_int = TRUE
+) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+### inspect_cat()
+
+#### `if (length(ttd) == 1)`
+
+If one dataset in `ttd`:
+
+  - check if there is at least 1 categorical column in the dataset in the `ttd` list	
+
+    - if so, run: 
+
+```{r}
+inspect_cat(df1 = ttd[[1]],
+  df2 = NULL,
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) == 2)`
+
+If two datasets in `ttd`:
+
+  - check for intersecting columns in the two datasets in the `ttd` list	
+  
+```{r}
+length(
+  intersect(
+    x = check_ttd_cat_cols(ttd2)[[1]], 
+    y = check_ttd_cat_cols(ttd2)[[2]])
+  ) > 0
+```
+
+  - If `TRUE`, store `intersecting_columns`  
+  
+```{r}
+intersecting_columns <- intersect(x = names(ttd2[[1]]), y = names(ttd2[[2]]))
+```
+
+  - Use `intersecting_columns` to subset each dataset in `ttd` list.
+
+```{r}
+inspect_cat(
+  df1 = ttd2[[1]][intersecting_columns],
+  df2 = ttd2[[2]][intersecting_columns],
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+```
+
+  - if there aren't any intersecting categorical columns, run the following on the dataset with the categorical column `ttd[[?]]`:
+
+```{r}
+inspect_cat(
+  df1 = ttd[[1]],
+  df2 = NULL,
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+```
+
+#### `if (length(ttd) >= 3)`
+
+If more than two datasets in `ttd`:
+
+```{r}
+inspect_cat(df1 = ttd_many[[1]],
+  df2 = NULL,
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+inspect_cat(df1 = ttd_many[[2]],
+  df2 = NULL,
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+inspect_cat(df1 = ttd_many[[3]],
+  df2 = NULL,
+  include_int = FALSE) |>
+  show_plot(text_labels = TRUE)
+# ... for all datasets in ttd list
+```
+
+
+## Inspect plot
+
+The `inspect_plot()` function will return all the relevant plots for the data contained the `ttd` list.
+
+```{r}
+#| label: inspect_plot_ttd
+inspect_plot(ttd = ttd)
+```
+
+It can also return specific graphs: 
+
+```{r}
+#| label: ttd2_num
+inspect_plot(ttd = ttd2, plot = "num")
+```
+
+```{r}
+#| label: ttd3_na
+inspect_plot(ttd = ttd3, plot = "na")
+```
+
+```{r}
+#| label: ttd_many_types
+inspect_plot(ttd = ttd_many, plot = "types")
+```
+

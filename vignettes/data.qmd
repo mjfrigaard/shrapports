@@ -1,0 +1,246 @@
+---
+title: "Data"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "# " 
+
+execute:
+  echo: true
+
+vignette: >
+  %\VignetteIndexEntry{Data}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(dplyr)
+library(tidyr)
+library(inspectdf)
+library(lobstr)
+```
+
+```{r}
+#| label: package
+library(shrapports)
+```
+
+The goal of `shrapports` is to demonstrate how to use parameterized reports (R Markdown and/or Quarto) in Shiny applications. This document covers '*all you need to know to download reports from your Shiny app.*'
+
+## TidyTuesday data 
+
+The application uses the [TidyTuesday data](https://github.com/rfordatascience/tidytuesday) via the [`tidytuesdayR`](https://github.com/dslc-io/tidytuesdayR) and [`ttmeta`](https://github.com/r4ds/ttmeta).
+
+### All TidyTuesday Data 
+
+The `all_tt_data.rda` dataset contains all years (2018 - current) from the `ttmeta::get_tt_tbl()` function. This datasets contain the following columns:
+
+```{r}
+#| label: all_tt_data
+glimpse(all_tt_data)
+```
+
+
+### All TidyTuesday Meta 
+
+The `all_tt_meta.rda` dataset contains all years (2018 - current) from the `ttmeta::get_tt_datasets_metadata()`. This dataset the following columns:
+
+```{r}
+#| label: all_tt_meta
+glimpse(all_tt_meta)
+```
+
+### All TidyTuesday Variable Details
+
+The `all_tt_var_details.rda` dataset contains the following columns:
+
+```{r}
+#| label: all_tt_var_details
+glimpse(all_tt_var_details)
+```
+
+### All TidyTuesday Combined  
+
+The `all_tt_combined.rda` dataset is `all_tt_meta` left-joined with `all_tt_data` by `year` and `week`.
+
+```{r}
+#| label: all_tt_combined
+glimpse(all_tt_combined)
+```
+
+The `clean_title` variable has been added to create an attribute we can use to join to the `all_tt_var_details` data. 
+
+## get_tt_data()
+
+The `get_tt_data()` function uses the `title` from the `ttmeta::get_tt_tbl()` function to the return the datasets from the GitHub repo. 
+
+### A single dataset
+
+If the tile contains a single dataset, the list returns `ttd` with a single element: 
+
+```{r}
+#| label: ttd
+ttd <- get_tt_data("Netflix Titles")
+```
+
+```{r}
+#| label: ttd_nms
+ttd_nms <- names(ttd)
+ttd_nms
+```
+
+The `clean_title` can be used to join back to `all_tt_combined` or `all_tt_data`: 
+
+```{r}
+#| label: ttd_clean_title
+attr(ttd, "clean_title")
+```
+
+### Two datasets 
+
+If `ttd` has two datasets, subset the list with the name position:
+
+```{r}
+#| label: ttd2
+ttd2 <- get_tt_data("Space Launches")
+```
+
+```{r}
+#| label: ttd2_nms
+ttd2_nms <- names(ttd2)
+ttd2_nms
+```
+
+```{r}
+#| label: ttd2_clean_title
+attr(ttd2, "clean_title")
+```
+
+```{r}
+ttd2_nms[1]
+glimpse(ttd2[[ttd2_nms[1]]])
+```
+
+```{r}
+ttd2_nms[2]
+glimpse(ttd2[[ttd2_nms[2]]])
+```
+
+### Three datasets
+
+If there are three datasets, we can see the names are assigned to each element in the list:
+
+```{r}
+#| label: ttd3
+ttd3 <- get_tt_data("Moore’s Law")
+```
+
+```{r}
+#| label: ttd3_nms
+ttd3_nms <- names(ttd3)
+ttd3_nms
+```
+
+These names can be used to subset the list:
+
+```{r}
+dplyr::glimpse(ttd3[[ttd3_nms[1]]])
+```
+
+
+```{r}
+dplyr::glimpse(ttd3[[ttd3_nms[2]]])
+```
+
+```{r}
+dplyr::glimpse(ttd3[[ttd3_nms[3]]])
+```
+
+The `clean_title` attribute will give us a joining variable:
+
+```{r}
+#| label: ttd3_clean_title
+attr(ttd3, "clean_title")
+```
+
+
+```{r}
+#| label: create_new_joining_vars
+dplyr::mutate(.data = ttd3[[ttd3_nms[1]]],
+  dataset_name = rep(x = ttd3_nms[1], nrow(ttd3[[ttd3_nms[1]]])),
+  clean_title = rep(x = attr(ttd3, "clean_title"), nrow(ttd3[[ttd3_nms[1]]]))
+) |>
+  dplyr::select(
+    dataset_name, 
+    clean_title, 
+    dplyr::everything())
+```
+
+### Many datasets
+
+If there are more than two datasets, the same rules apply.
+
+```{r}
+#| label: ttd_many
+ttd_many <- get_tt_data("LEGO database")
+```
+
+```{r}
+#| label: ttd_many_nms
+ttd_many_nms <- names(ttd_many)
+ttd_many_nms
+```
+
+```{r}
+#| label: ttd_many_nms_clean_title
+attr(ttd_many, "clean_title")
+```
+
+## Meta data
+
+The `get_tt_title_meta()` function returns info on the columns in each dataset in a `ttd` list. 
+
+```{r}
+#| label: get_tt_title_meta_ttd_chr_cols
+ttd_meta <- get_tt_title_meta(ttd = ttd)
+ttd_meta |> 
+  dplyr::filter(col_type == "character") |> 
+  dplyr::count(clean_title, dataset, col_type, name = "chr_cols") |> 
+  dplyr::arrange(desc(chr_cols))
+```
+
+```{r}
+#| label: get_tt_title_meta_ttd2
+ttd2_meta <- get_tt_title_meta(ttd = ttd2)
+head(ttd2_meta)
+```
+
+```{r}
+#| label: get_tt_title_meta_ttd3
+ttd3_meta <- get_tt_title_meta(ttd = ttd3)
+head(ttd3_meta)
+```
+
+```{r}
+#| label: get_tt_title_meta_ttd_many
+ttd_many_meta <- get_tt_title_meta(ttd = ttd_many)
+head(ttd_many_meta)
+```
+
+Below is the number of numeric columns per `dataset` and `clean_title`: 
+
+```{r}
+#| label: ttd_many_meta_num_cols
+ttd_many_meta |> 
+  dplyr::filter(col_type == "numeric") |> 
+  dplyr::count(clean_title, dataset, col_type, name = "num_cols") |> 
+  dplyr::arrange(desc(num_cols))
+```
+

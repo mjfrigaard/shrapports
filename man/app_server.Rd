@@ -2,7 +2,7 @@
 % Please edit documentation in R/app_server.R
 \name{app_server}
 \alias{app_server}
-\title{Application Server}
+\title{Application Server - Enhanced Parameter Handling}
 \usage{
 app_server(input, output, session)
 }
@@ -14,5 +14,5 @@ app_server(input, output, session)
 \item{session}{Shiny session object}
 }
 \description{
-Defines the server logic for the modular Tidy Tuesday app.
+Application Server - Enhanced Parameter Handling
 }

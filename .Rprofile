@@ -17,7 +17,6 @@ clean_vignettes <- function(pth = "vignettes/") {
   unlink(files_to_delete, recursive = TRUE)
   # return
   return(invisible())
-
 }
 # run
 if (interactive()) {

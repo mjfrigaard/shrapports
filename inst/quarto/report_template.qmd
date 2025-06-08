@@ -1,0 +1,326 @@
+---
+title: "TidyTuesday Report"
+subtitle: "Data Analysis Report"
+date: today
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+    df-print: paged
+    fig-width: 10
+    fig-height: 6
+    fig-dpi: 300
+    embed-resources: true
+    standalone: true
+params:
+  dataset_title: "Dataset"
+  title: "TidyTuesday Report"
+  data_list: !r list()
+  plots: !r NULL
+  plot_type: "type"
+execute:
+  echo: false
+  warning: false
+  message: false
+  error: false
+---
+
+```{r setup}
+#| include: false
+
+# Load required packages
+library(ggplot2)
+library(gt)
+library(dplyr)
+library(knitr)
+
+# Set title from params
+if (!is.null(params$dataset_title) && params$dataset_title != "") {
+  title_text <- params$dataset_title
+} else {
+  title_text <- "TidyTuesday Dataset"
+}
+```
+
+# `r title_text` {.unnumbered}
+
+## Executive Summary {.unnumbered}
+
+This report provides an overview of the **`r title_text`** dataset from TidyTuesday. The analysis includes data exploration visualizations and a preview of the dataset structure.
+
+::: {.callout-note}
+**Report Generated:** `r Sys.time()`
+:::
+
+```{r data-info}
+#| output: asis
+
+# Get basic info about the data
+if (!is.null(params$data_list) && length(params$data_list) > 0) {
+  first_df <- params$data_list[[1]]
+  dataset_names <- names(params$data_list)
+  
+  cat("**Number of datasets:**", length(params$data_list), "\n\n")
+  cat("**Dataset names:**", paste(dataset_names, collapse = ", "), "\n\n")
+  cat("**Main dataset dimensions:**", nrow(first_df), "rows ×", ncol(first_df), "columns\n\n")
+} else {
+  cat("No data available.\n\n")
+}
+```
+
+## Data Visualization
+
+```{r determine-plot-desc}
+#| include: false
+
+plot_description <- switch(params$plot_type,
+  "type" = "variable types",
+  "na" = "missing data patterns", 
+  "cor" = "correlation matrix",
+  "num" = "numeric variable distributions",
+  "cat" = "categorical variable frequencies",
+  "data visualization"
+)
+```
+
+The following visualization shows the **`r plot_description`** for the selected dataset(s).
+
+```{r plots}
+#| fig-cap: !expr paste("Data visualization:", params$plot_type)
+
+if (!is.null(params$plots)) {
+  if (inherits(params$plots, "gg")) {
+    # Single plot
+    print(params$plots)
+  } else if (is.list(params$plots)) {
+    # Multiple plots
+    for (i in seq_along(params$plots)) {
+      if (inherits(params$plots[[i]], "gg")) {
+        print(params$plots[[i]])
+        cat("\n\n")
+      }
+    }
+  }
+} else {
+  cat("No visualization available for the current selection.")
+}
+```
+
+## Data Preview
+
+### Dataset Overview
+
+```{r data-summary}
+#| output: asis
+
+if (!is.null(params$data_list) && length(params$data_list) > 0) {
+  
+  for (i in seq_along(params$data_list)) {
+    dataset_name <- names(params$data_list)[i]
+    df <- params$data_list[[i]]
+    
+    cat("#### Dataset:", dataset_name, "\n\n")
+    
+    tryCatch({
+      # Create summary table using gt
+      summary_data <- data.frame(
+        Metric = c("Rows", "Columns", "Missing Values", "Complete Rows", "Data Types"),
+        Value = c(
+          format(nrow(df), big.mark = ","),
+          format(ncol(df), big.mark = ","),
+          format(sum(is.na(df)), big.mark = ","),
+          format(sum(complete.cases(df)), big.mark = ","),
+          paste(unique(sapply(df, class)), collapse = ", ")
+        ),
+        stringsAsFactors = FALSE
+      )
+      
+      summary_table <- summary_data |>
+        gt() |>
+        gt::tab_header(
+          title = paste("Summary Statistics:", dataset_name)
+        ) |>
+        gt::tab_style(
+          style = gt::cell_text(weight = "bold"),
+          locations = gt::cells_column_labels()
+        ) |>
+        gt::tab_style(
+          style = gt::cell_fill(color = "#f8f9fa"),
+          locations = gt::cells_column_labels()
+        ) |>
+        gt::tab_options(
+          table.width = "100%",
+          table.font.size = "14px"
+        )
+      
+      # Print the gt table
+      print(summary_table)
+      
+    }, error = function(e) {
+      # Fallback to kable if gt fails
+      cat("*Using fallback table format*\n\n")
+      knitr::kable(summary_data, 
+                   caption = paste("Summary Statistics:", dataset_name),
+                   format = "html")
+    })
+    
+    cat("\n\n")
+  }
+} else {
+  cat("No data available for summary.\n\n")
+}
+```
+
+### Data Sample
+
+```{r data-preview}
+#| output: asis
+
+if (!is.null(params$data_list) && length(params$data_list) > 0) {
+  
+  for (i in seq_along(params$data_list)) {
+    dataset_name <- names(params$data_list)[i]
+    df <- params$data_list[[i]]
+    
+    cat("#### Sample Data:", dataset_name, "\n\n")
+    
+    # Show first 10 rows
+    preview_df <- head(df, 10)
+    
+    # Handle wide tables by limiting columns if necessary
+    if (ncol(preview_df) > 10) {
+      preview_df <- preview_df[, 1:10]
+      cat("::: {.callout-tip}\n")
+      cat("**Note:** Showing first 10 columns only\n")
+      cat(":::\n\n")
+    }
+    
+    tryCatch({
+      preview_table <- preview_df |>
+        gt() |>
+        gt::tab_header(
+          title = paste("Data Preview:", dataset_name),
+          subtitle = paste("Showing first", min(10, nrow(df)), "rows")
+        ) |>
+        gt::tab_style(
+          style = gt::cell_text(size = "12px"),
+          locations = gt::cells_body()
+        ) |>
+        gt::tab_style(
+          style = gt::cell_fill(color = "#f8f9fa"),
+          locations = gt::cells_column_labels()
+        ) |>
+        gt::tab_options(
+          table.width = "100%",
+          table.font.size = "12px",
+          data_row.padding = "3px"
+        )
+      
+      # Print the gt table
+      print(preview_table)
+      
+    }, error = function(e) {
+      # Fallback to kable if gt fails
+      cat("*Using fallback table format*\n\n")
+      knitr::kable(preview_df, 
+                   caption = paste("Data Preview:", dataset_name),
+                   format = "html")
+    })
+    
+    cat("\n\n")
+  }
+} else {
+  cat("No data available for preview.\n\n")
+}
+```
+
+### Variable Information
+
+```{r variable-info}
+#| output: asis
+
+if (!is.null(params$data_list) && length(params$data_list) > 0) {
+  first_df <- params$data_list[[1]]
+  
+  tryCatch({
+    # Create variable information table
+    var_info <- data.frame(
+      Variable = names(first_df),
+      Type = sapply(first_df, function(x) class(x)[1]),
+      Missing = sapply(first_df, function(x) sum(is.na(x))),
+      Missing_Percent = round(sapply(first_df, function(x) sum(is.na(x))/length(x) * 100), 2),
+      Unique_Values = sapply(first_df, function(x) length(unique(x))),
+      stringsAsFactors = FALSE
+    )
+    
+    var_table <- var_info |>
+      gt() |>
+      gt::tab_header(
+        title = "Variable Information",
+        subtitle = names(params$data_list)[1]
+      ) |>
+      gt::cols_label(
+        Variable = "Variable Name",
+        Type = "Data Type",
+        Missing = "Missing Count",
+        Missing_Percent = "Missing %",
+        Unique_Values = "Unique Values"
+      ) |>
+      gt::fmt_number(
+        columns = Missing_Percent,
+        decimals = 1
+      ) |>
+      gt::tab_style(
+        style = gt::cell_fill(color = "#fff3cd"),
+        locations = gt::cells_body(
+          columns = Missing_Percent,
+          rows = Missing_Percent > 10
+        )
+      ) |>
+      gt::tab_style(
+        style = gt::cell_fill(color = "#f8d7da"),
+        locations = gt::cells_body(
+          columns = Missing_Percent,
+          rows = Missing_Percent > 50
+        )
+      ) |>
+      gt::tab_options(
+        table.width = "100%",
+        table.font.size = "14px"
+      )
+    
+    # Print the gt table
+    print(var_table)
+    
+  }, error = function(e) {
+    # Fallback to kable if gt fails
+    cat("*Using fallback table format*\n\n")
+    knitr::kable(var_info, 
+                 caption = "Variable Information",
+                 format = "html")
+  })
+  
+} else {
+  cat("No data available for variable information.\n\n")
+}
+```
+
+## Technical Details {.unnumbered}
+
+::: {.callout-note collapse="true"}
+
+## Session Information
+
+**R Version:** `r R.version.string`  
+**Report Generated:** `r Sys.time()`  
+**TidyTuesday Dataset:** `r title_text`  
+**Report Format:** Quarto HTML
+
+:::
+
+---
+
+*This report was generated automatically using the shrapports package.*

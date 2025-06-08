@@ -2,7 +2,7 @@
 % Please edit documentation in R/mod_report.R
 \name{mod_report_ui}
 \alias{mod_report_ui}
-\title{Report UI Module}
+\title{Report UI Module with Format Selection}
 \usage{
 mod_report_ui(id)
 }
@@ -10,8 +10,8 @@ mod_report_ui(id)
 \item{id}{Namespace ID}
 }
 \value{
-UI elements for report generation
+UI elements for report generation with format options
 }
 \description{
-Report UI Module
+Report UI Module with Format Selection
 }

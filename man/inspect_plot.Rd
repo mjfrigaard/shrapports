@@ -2,30 +2,42 @@
 % Please edit documentation in R/inspect_plot.R
 \name{inspect_plot}
 \alias{inspect_plot}
-\title{Generate an inspectdf Visualization from TidyTuesday Data}
+\title{Inspect and Plot TidyTuesday Data}
 \usage{
-inspect_plot(ttd, plot = c("type", "na", "cor", "num", "cat"))
+inspect_plot(ttd, plot = "all")
 }
 \arguments{
-\item{ttd}{A list returned by \code{get_tt_data()}.}
+\item{ttd}{A list of data frames from \code{\link[=get_tt_data]{get_tt_data()}}}
 
-\item{plot}{A string specifying which plot to produce:
-\code{"type"}, \code{"na"}, \code{"cor"}, \code{"num"}, or \code{"cat"}.}
+\item{plot}{Character vector specifying which plots to generate. Options include:
+\itemize{
+\item \code{"types"} - Column type distributions
+\item \code{"mem"} - Memory usage analysis
+\item \code{"na"} - Missing value analysis
+\item \code{"cor"} - Correlation analysis (numeric columns)
+\item \code{"imb"} - Feature imbalance (categorical columns)
+\item \code{"num"} - Numeric column summaries
+\item \code{"cat"} - Categorical column summaries
+\item \code{"all"} - Generate all available plots (default)
+}}
 }
 \value{
-A \code{ggplot2} plot, or a list of plots (for categorical and numeric
-checks).
+Plots are displayed; function is called for side effects
 }
 \description{
-Based on a \code{ttd} object returned by \code{get_tt_data()}, this function determines
-how to apply \code{inspectdf} plotting functions depending on the number and types
-of datasets returned.
+A comprehensive function that analyzes TidyTuesday datasets and generates
+appropriate inspection plots based on data characteristics and number of datasets.
 }
 \examples{
-ttd <- get_tt_data("Netflix Titles")
-inspect_plot(ttd, plot = "type")
+ttd <- get_tt_data("Moore’s Law")
 
-ttd2 <- get_tt_data("Space Launches")
-inspect_plot(ttd2, plot = "num")
+# Generate all plots
+inspect_plot(ttd)
+
+# Generate only specific plots
+inspect_plot(ttd, plot = c("types", "mem"))
+
+# Generate single plot type
+inspect_plot(ttd, plot = "cor")
 
 }
