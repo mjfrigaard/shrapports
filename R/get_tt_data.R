@@ -1,3 +1,4 @@
+### \--- GET TIDY TUESDAY DATA WITH FILE NAMES --\ ----
 #' Get TidyTuesday Data with File Names
 #'
 #' Retrieves TidyTuesday datasets based on the dataset title and returns them
@@ -54,30 +55,38 @@ get_tt_data <- function(title, preserve_original_names = FALSE) {
     logr_msg(paste("Number of datasets returned:", length(tt_data)),
       level = "INFO")
 
-    ## extract file names from .tt attribute -----
+    ## extract_file_names()  -----
+    ### extract file names from .tt attribute  -----
     file_names <- extract_file_names(tt_data, preserve_original_names)
 
-    ## create list with element names ------
+    ## create_named_result()  ------
+    ### create list with element names  ------
     result <- create_named_result(tt_data, file_names)
 
-    ## add clean_title attribute -----
+    ## extract_dataset_title() ----
+    ### add clean_title attribute -----
     clean_title <- extract_dataset_title(title)
     attr(result, "clean_title") <- clean_title
 
-    logr_msg(paste("Final result has", length(result), "datasets with names:",
-                  paste(names(result), collapse = ", ")), level = "INFO")
+    logr_msg(
+      paste("Final result has",
+        length(result), "datasets with names:",
+          paste(names(result), collapse = ", ")), level = "INFO")
+
     logr_msg(paste("Clean title:", clean_title), level = "DEBUG")
 
     return(result)
 
   }, error = function(e) {
-    logr_msg(paste("Error retrieving data for", title, ":", e$message),
-             level = "ERROR")
+    logr_msg(
+      paste("Error retrieving data for",
+        title, ":", e$message), level = "ERROR")
 
     # return empty list with message
     result <- list()
     attr(result, "error") <- e$message
 
+    ## ERROR extract_dataset_title() ----
     ### add clean_title even for errors ----
     tryCatch({
       clean_title <- extract_dataset_title(title)
@@ -90,6 +99,7 @@ get_tt_data <- function(title, preserve_original_names = FALSE) {
 
   }, warning = function(w) {
 
+    ## LOG WARNING ----
     logr_msg(paste("Warning while retrieving data for", title, ":", w$message),
              level = "WARN")
     # continue processing despite warnings
@@ -97,6 +107,7 @@ get_tt_data <- function(title, preserve_original_names = FALSE) {
   })
 }
 
+### \--- EXTRACT FILE NAMES --\ ----
 #' Extract file names from TidyTuesday data object
 #'
 #' @param tt_data list of TidyTuesday data from [get_tt_data()]
@@ -105,8 +116,8 @@ get_tt_data <- function(title, preserve_original_names = FALSE) {
 #' @return Character vector of file names with .gz extensions removed
 #'
 #' @export
-#' 
-#' @examples 
+#'
+#' @examples
 #' ttd <- get_tt_data("Moore’s Law")
 #' extract_file_names(ttd)
 #'
@@ -173,7 +184,7 @@ extract_file_names <- function(tt_data, preserve_original_names = FALSE) {
   }
 }
 
-
+### \--- CREATE NAMED RESULT --\ ----
 #' Create named result list from TidyTuesday data
 #'
 #' @param tt_data TidyTuesday data object
@@ -182,7 +193,7 @@ extract_file_names <- function(tt_data, preserve_original_names = FALSE) {
 #' @return Named list of cleaned datasets
 #'
 #' @export
-#' 
+#'
 #' @examples
 #' ttd <- get_tt_data("Moore’s Law")
 #' create_named_result(ttd, names(ttd))
@@ -214,6 +225,7 @@ create_named_result <- function(tt_data, file_names) {
   return(result)
 }
 
+### \--- GET TIDY TUESDAY TITLE METADATA --\ ----
 #' Get Dataset Metadata
 #'
 #' Analyzes the column types across all datasets in a TidyTuesday data list
@@ -322,7 +334,8 @@ get_tt_title_meta <- function(ttd) {
   return(result)
 }
 
-#' Clean Title String 
+### \--- CLEAN TITLE STREAM --\ ----
+#' Clean Title String
 #'
 #' Internal function that performs the actual string cleaning operations.
 #' This function handles various types of punctuation and formatting issues
@@ -394,6 +407,7 @@ clean_title_string <- function(title) {
 }
 
 
+### \--- EXTRACT DATASET TITLE --\ ----
 #' Extract and Clean Dataset Title
 #'
 #' `extract_dataset_title()` takes a dataset title and returns a cleaned version suitable

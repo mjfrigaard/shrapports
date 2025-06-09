@@ -45,15 +45,18 @@ inspect_plot <- function(ttd, plot = "all") {
     plot <- c("types", "mem", "na", "cor", "imb", "num", "cat")
   }
 
-  # 1. Determine the number of datasets in the ttd list
+
+  ## ttd_length() ----
+  ### determine number of datasets in ttd list ----
   num_datasets <- ttd_length(ttd)
   logr_msg(paste("Number of datasets:", num_datasets), level = "INFO")
 
-  # 2. Determine the name of the datasets in the ttd list
+  ### determine name of the datasets in the ttd list ----
   dataset_names <- names(ttd)
   logr_msg(paste("Dataset names:", paste(dataset_names, collapse = ", ")), level = "INFO")
 
-  # 3-10. Determine column types and intersections
+  ### check_col_types() -----
+  #### determine column types and intersections -----
   num_cols <- check_col_types(ttd, type = "num")
   cat_cols <- check_col_types(ttd, type = "cat")
   log_cols <- check_col_types(ttd, type = "log")
@@ -73,22 +76,26 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   })
 
-  # plot execution functions ----
-
-  ## TYPES ----
+  ## \-- PLOT EXECUTION FUNS ----
+  ### \--- TYPES ----
   execute_inspect_types <- function() {
-    logr_msg("Starting inspect_types analysis", level = "INFO")
+    logr_msg("Starting inspect_types analysis",
+      level = "INFO")
+
     ### 1 dataset ----
     if (num_datasets == 1) {
-      logr_msg("Running inspect_types for single dataset", level = "DEBUG")
-      print(
-          inspectdf::inspect_types(
+      logr_msg("Running inspect_types for single dataset",
+        level = "DEBUG")
+
+      print(inspectdf::inspect_types(
             df1 = ttd[[1]],
             df2 = NULL,
             compare_index = FALSE) |>
             inspectdf::show_plot(text_labels = TRUE))
+
     ### 2 datasets ----
     } else if (num_datasets == 2) {
+    #### get_intersecting_cols() ----
       intersecting_columns <- get_intersecting_cols(ttd)
 
       if (length(intersecting_columns) > 0) {
@@ -116,7 +123,6 @@ inspect_plot <- function(ttd, plot = "all") {
       }
 
     ### >= 3 datasets ----
-
     } else if (num_datasets >= 3) {
       logr_msg("Running inspect_types for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
@@ -134,12 +140,12 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## MEMORY --------------------------------------------------------
+  ### \--- MEMORY --------------------------------------------------------
   execute_inspect_mem <- function() {
 
     logr_msg("Starting inspect_mem analysis", level = "INFO")
 
-    ### 1 dataset --------------------------------------------------------
+    #### 1 dataset --------------------------------------------------------
     if (num_datasets == 1) {
       logr_msg("Running inspect_mem for single dataset", level = "DEBUG")
       print(
@@ -148,7 +154,7 @@ inspect_plot <- function(ttd, plot = "all") {
           df2 = NULL) |>
             inspectdf::show_plot(text_labels = TRUE)
         )
-    ### 2 datasets --------------------------------------------------------
+    #### 2 datasets --------------------------------------------------------
     } else if (num_datasets == 2) {
       logr_msg("Running inspect_mem for two datasets", level = "DEBUG")
       print(
@@ -157,7 +163,7 @@ inspect_plot <- function(ttd, plot = "all") {
           df2 = ttd[[2]]) |>
             inspectdf::show_plot(text_labels = TRUE)
         )
-    ### >= 3 datasets ----
+    #### >= 3 datasets ----
     } else if (num_datasets >= 3) {
       logr_msg("Running inspect_mem for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
@@ -173,23 +179,22 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## MISSING ----
+  ### \--- MISSING ----
   execute_inspect_na <- function() {
 
     logr_msg("Starting inspect_na analysis", level = "INFO")
 
-    ### 1 dataset ----
+    #### 1 dataset ----
     if (num_datasets == 1) {
 
       logr_msg("Running inspect_na for single dataset", level = "DEBUG")
 
-      print(
-        inspectdf::inspect_na(
+      print(inspectdf::inspect_na(
           df1 = ttd[[1]],
           df2 = NULL) |>
             inspectdf::show_plot(text_labels = TRUE))
 
-      ### 2 datasets ----------
+      #### 2 datasets ----------
     } else if (num_datasets == 2) {
       logr_msg("Running inspect_na for two datasets", level = "DEBUG")
       print(
@@ -198,7 +203,7 @@ inspect_plot <- function(ttd, plot = "all") {
         df2 = ttd[[2]]) |>
             inspectdf::show_plot(text_labels = TRUE))
 
-      ### >= 3 datasets ------------
+      #### >= 3 datasets ------------
     } else if (num_datasets >= 3) {
       logr_msg("Running inspect_na for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
@@ -214,12 +219,13 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## CORRELATION ----
+  ### \--- CORRELATION ----
   execute_inspect_cor <- function() {
     logr_msg("Starting inspect_cor analysis", level = "INFO")
 
     ### 1 dataset ----
     if (num_datasets == 1) {
+      ### has_min_cols() ----
       if (has_min_cols(num_cols, 1, min_count = 2)) {
         logr_msg("Running inspect_cor for single dataset with sufficient numeric columns",
           level = "DEBUG")
@@ -236,6 +242,7 @@ inspect_plot <- function(ttd, plot = "all") {
 
       ### 2 datasets ----
     } else if (num_datasets == 2) {
+      ####has_min_cols() ----
       if (has_min_cols(num_cols, 1) && has_min_cols(num_cols, 2)) {
         logr_msg("Running inspect_cor for two datasets with numeric columns", level = "DEBUG")
         print(
@@ -257,6 +264,7 @@ inspect_plot <- function(ttd, plot = "all") {
       logr_msg("Running inspect_cor for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
         idx <- which(names(ttd) == .y)
+        #### has_min_cols() ----
         if (is.data.frame(.x) && has_min_cols(num_cols, idx, min_count = 2)) {
           logr_msg(paste("Analyzing correlations for dataset", .y), level = "DEBUG")
           print(
@@ -272,7 +280,7 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## IMBALANCES ----
+  ### \--- IMBALANCES ----
   execute_inspect_imb <- function() {
     logr_msg("Starting inspect_imb analysis", level = "INFO")
 
@@ -298,7 +306,7 @@ inspect_plot <- function(ttd, plot = "all") {
             inspectdf::show_plot(text_labels = TRUE)
         )
 
-      ### >= 3 datasets ----
+      #### >= 3 datasets ----
     } else if (num_datasets >= 3) {
       logr_msg("Running inspect_imb for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
@@ -315,12 +323,13 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## NUMERIC ----
+  ### \--- NUMERIC ----
   execute_inspect_num <- function() {
     logr_msg("Starting inspect_num analysis", level = "INFO")
 
-    ## 1 dataset ----
+    ### 1 dataset ----
     if (num_datasets == 1) {
+      ### has_min_cols() ----
       if (has_min_cols(num_cols, 1)) {
         logr_msg("Running inspect_num for single dataset with numeric columns",
           level = "DEBUG")
@@ -335,9 +344,9 @@ inspect_plot <- function(ttd, plot = "all") {
       } else {
         logr_msg("No numeric columns found for numerical analysis", level = "WARN")
       }
-    ## 2 datasets ----
+    ### 2 datasets ----
     } else if (num_datasets == 2) {
-
+      #### has_min_cols() ----
       if (has_min_cols(num_cols, 1) && has_min_cols(num_cols, 2)) {
         logr_msg("Running inspect_num for two datasets with numeric columns", level = "DEBUG")
         print(
@@ -350,8 +359,8 @@ inspect_plot <- function(ttd, plot = "all") {
 
       } else {
         # Check which dataset has numeric columns and analyze that one
+        #### has_min_cols() ----
         datasets_with_num <- purrr::map_lgl(seq_along(ttd)[1:2], ~ has_min_cols(num_cols, .x))
-
         purrr::walk(which(datasets_with_num), ~ {
           logr_msg(paste("Running inspect_num for dataset", .x), level = "DEBUG")
           print(
@@ -370,11 +379,11 @@ inspect_plot <- function(ttd, plot = "all") {
 
     ### >= 3 datasets ----
     } else if (num_datasets >= 3) {
-      logr_msg("Running inspect_num for multiple datasets", level = "DEBUG")
 
+      logr_msg("Running inspect_num for multiple datasets", level = "DEBUG")
       purrr::iwalk(ttd, ~ {
         idx <- which(names(ttd) == .y)
-
+        #### has_min_cols() ----
         if (is.data.frame(.x) && has_min_cols(num_cols, idx)) {
           logr_msg(paste("Analyzing numeric data for dataset", .y), level = "DEBUG")
 
@@ -390,7 +399,7 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ## CATEGORICAL ----
+  ### \--- CATEGORICAL ----
   execute_inspect_cat <- function() {
 
     logr_msg("Starting inspect_cat analysis", level = "INFO")
@@ -428,6 +437,7 @@ inspect_plot <- function(ttd, plot = "all") {
 
         logr_msg(paste("Found intersecting categorical columns:",
             paste(intersecting_cat_cols, collapse = ", ")), level = "DEBUG")
+        #### get_intersecting_cols() ----
         intersecting_columns <- get_intersecting_cols(ttd)
 
         if (length(intersecting_columns) > 0) {
@@ -456,7 +466,7 @@ inspect_plot <- function(ttd, plot = "all") {
           )
       }
 
-      ### >= 3 datasets ----
+      #### >= 3 datasets ----
     } else if (num_datasets >= 3) {
 
       logr_msg("Running inspect_cat for multiple datasets", level = "DEBUG")
@@ -477,7 +487,7 @@ inspect_plot <- function(ttd, plot = "all") {
     }
   }
 
-  ### list plot functions ----
+  ##### list plot functions ----
   plot_functions <- list(
     "types" = execute_inspect_types,
     "mem" = execute_inspect_mem,
@@ -488,20 +498,20 @@ inspect_plot <- function(ttd, plot = "all") {
     "cat" = execute_inspect_cat
   )
 
-  ### execute requested plots ----
+  ##### execute requested plots ----
   purrr::walk(plot, ~ {
     if (.x %in% names(plot_functions)) {
       plot_functions[[.x]]()
     }
   })
 
-  ### logging ----
+  #### logging ----
   logr_msg("=== ANALYSIS SUMMARY ===", level = "INFO")
   logr_msg(paste("Total datasets analyzed:", num_datasets), level = "INFO")
   logr_msg(paste("Dataset names:", paste(dataset_names, collapse = ", ")), level = "INFO")
   logr_msg(paste("Plots generated:", paste(plot, collapse = ", ")), level = "INFO")
 
-  # log column type summaries -----
+  #### log column type summaries -----
   purrr::iwalk(ttd, ~ {
     idx <- which(names(ttd) == .y)
     num_count <- if (has_min_cols(num_cols, idx)) length(num_cols[[idx]]) else 0
@@ -573,32 +583,6 @@ get_intersecting_cols <- function(ttd) {
     character(0)
   }
 }
-
-#' Get Datasets with Sufficient Columns
-#'
-#' Returns indices of datasets that have at least the minimum required number
-#' of columns of a specific type.
-#'
-#' @param col_list A named list of column vectors (output from `check_col_types()`)
-#' @param min_count Integer minimum number of columns required (default: 1)
-#'
-#' @return Integer vector of dataset indices that meet the requirement
-#'
-#' @export
-#'
-#' @examples
-#' ttd <- get_tt_data("Moore's Law")
-#' num_cols <- check_col_types(ttd, "num")
-#' get_valid_datasets(num_cols, min_count = 2)
-#'
-get_valid_datasets <- function(col_list, min_count = 1) {
-  which(
-    sapply(
-      X = seq_along(col_list),
-      FUN = function(i) has_min_cols(col_list, i, min_count))
-    )
-}
-
 
 #' Check Column Types in TidyTuesday Data
 #'
