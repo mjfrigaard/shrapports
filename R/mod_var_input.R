@@ -20,6 +20,7 @@ mod_var_input_ui <- function(id) {
           choices = choices,
           selected = "Moore’s Law"
         ),
+        code("reactiveValuesToList()"),
         verbatimTextOutput(ns("vals"))
       )
     },
@@ -69,7 +70,8 @@ mod_var_input_server <- function(id) {
                        type = "error", duration = 10)
         return(list())
       })
-    })
+    }) |>
+      bindEvent(input$dataset_title)
 
     # print names of datasets from title
     output$vals <- renderPrint({
@@ -77,13 +79,15 @@ mod_var_input_server <- function(id) {
         title <- attr(data(), "clean_title")
         ds_names <- names(data())
         glue::glue("The {title} and {ds_names}")
-    }) |> 
+    }) |>
       bindEvent(input$dataset_title)
 
     # return both data and dataset title
-    return(list(
+    return(
+      list(
       data = data,
       dataset_title = reactive({ input$dataset_title })
-    ))
+        )
+      )
   })
 }

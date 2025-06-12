@@ -14,14 +14,15 @@ app_server <- function(input, output, session) {
   logr_msg(paste("Session started for user:", session$user), level = "DEBUG")
 
   tryCatch({
-    # Initialize modules - now returns both data and dataset title
+    # initialize modules
     var_input_result <- mod_var_input_server("var_input")
+    # return the data and title
     selected_data <- var_input_result$data
     dataset_title <- var_input_result$dataset_title
 
     logr_msg("Variable input module initialized", level = "DEBUG")
 
-    # Get reactive values for report
+    # reactive values for report
     viz_result <- mod_viz_server("viz", selected_data)
     logr_msg("Visualization module initialized", level = "DEBUG")
 

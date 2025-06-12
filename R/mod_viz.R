@@ -24,7 +24,7 @@ mod_viz_ui <- function(id) {
           selected = "type"
         ),
         uiOutput(ns("plot_ui")),
-        strong("Reactive ", code("data()"), " input"),
+        code("data()"),
         verbatimTextOutput(ns("dev"))
       )
     },
@@ -49,6 +49,7 @@ mod_viz_ui <- function(id) {
 #' @export
 mod_viz_server <- function(id, data) {
   moduleServer(id, function(input, output, session) {
+
     logr_msg("Initializing visualization server module", level = "DEBUG")
 
     output$dev <- renderPrint({
